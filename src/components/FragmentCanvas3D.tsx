@@ -8,6 +8,7 @@ interface FragmentCanvas3DProps {
   tokens: BrandTokens;
   logoUrl: string;
   scrollProgress: number;
+  introActive?: boolean;
 }
 
 /**
@@ -20,13 +21,20 @@ export const FragmentCanvas3D: React.FC<FragmentCanvas3DProps> = ({
   sceneSettings,
   tokens,
   logoUrl,
+  introActive = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const configRef = useRef({ sceneSettings, tokens });
+  // Change the medallion's arrival state without recreating its WebGL canvas.
+  const introActiveRef = useRef(introActive);
 
   useEffect(() => {
     configRef.current = { sceneSettings, tokens };
   }, [sceneSettings, tokens]);
+
+  useEffect(() => {
+    introActiveRef.current = introActive;
+  }, [introActive]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -236,6 +244,7 @@ export const FragmentCanvas3D: React.FC<FragmentCanvas3DProps> = ({
     let disposed = false;
     let rafId = 0;
     const startTime = performance.now();
+    let introScaleMix = introActiveRef.current ? 1 : 0;
 
     const updateScene = (elapsedSec: number) => {
       const { sceneSettings: cfg, tokens: tk } = configRef.current;
@@ -255,18 +264,30 @@ export const FragmentCanvas3D: React.FC<FragmentCanvas3DProps> = ({
       gyroRingMesh.visible = cfg.orbitalRings;
       gyroRingMesh.scale.setScalar(viewport.compact ? 0.82 : 1);
       const breathing = 1 + Math.sin(elapsedSec * 0.54 * speed) * 0.022;
-      medallionGroup.scale.setScalar(viewport.scale * breathing);
+      // The same sculpted coin fills the empty stage before the portfolio
+      // arrives. Ease back to its normal size when content fades over it.
+      introScaleMix += ((introActiveRef.current ? 1 : 0) - introScaleMix) * 0.055;
+      const introScale = 1 + introScaleMix * (viewport.compact ? 0.1 : 0.18);
+      medallionGroup.scale.setScalar(viewport.scale * breathing * introScale);
 
       const driftX = Math.sin(elapsedSec * 0.43 * speed) * (viewport.compact ? 0.075 : 0.15);
       const driftY = Math.sin(elapsedSec * 0.75 * speed) * (viewport.compact ? 0.16 : 0.27);
       const pointerTravel = viewport.compact ? 0.11 : 0.29;
       medallionGroup.position.set(
         driftX + pointer.x * pointerTravel,
-        driftY + pointer.y * pointerTravel * 0.68,
+        driftY + pointer.y * pointerTravel * 0.68 +
+          (introActiveRef.current ? Math.sin(elapsedSec * 2) * 0.07 : 0),
         0.5 + Math.cos(elapsedSec * 0.56 * speed) * 0.14
       );
 
+      // Exactly one turn from the ORIGINAL Three.js medallion. The final
+      // 2π angle is the normal front-facing angle, so the object never swaps
+      // to a flat copy and its ambient motion remains continuous afterward.
+      const turnProgress = Math.min(1, Math.max(0, (elapsedSec - 0.8) / 1.9));
+      const easedTurn = (1 - Math.cos(turnProgress * Math.PI)) / 2;
+      const arrivalTurn = introActiveRef.current ? easedTurn * Math.PI * 2 : 0;
       medallionGroup.rotation.y =
+        arrivalTurn +
         Math.sin(elapsedSec * 0.49 * speed) * 0.28 +
         pointer.x * 0.36;
       medallionGroup.rotation.x =
@@ -329,7 +350,7 @@ export const FragmentCanvas3D: React.FC<FragmentCanvas3DProps> = ({
     <div
       ref={containerRef}
       aria-hidden="true"
-      className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
+      className="nfc-ceremony-scene fixed inset-0 pointer-events-none z-0 overflow-hidden"
     />
   );
 };

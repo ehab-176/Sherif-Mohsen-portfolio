@@ -140,16 +140,14 @@ export default function App() {
 
   return (
     <div
-      className="min-h-screen relative text-white selection:bg-[#FFB629] selection:text-[#0B0B0B]"
+      className={`min-h-screen relative text-white selection:bg-[#FFB629] selection:text-[#0B0B0B] ${
+        showNfcWelcome ? 'nfc-ceremony-active' : nfcWelcomeFinished ? 'nfc-ceremony-complete' : ''
+      }`}
       style={{ backgroundColor: data.tokens.background }}
+      aria-busy={showNfcWelcome}
     >
       {showNfcWelcome && (
-        <NfcWelcomeIntro
-          logoUrl={data.personal.logoUrl}
-          nameEn={data.personal.nameEn}
-          nameAr={data.personal.nameAr}
-          onComplete={finishNfcWelcome}
-        />
+        <NfcWelcomeIntro onComplete={finishNfcWelcome} />
       )}
 
       {/* Subtle Scroll Progress Indicator */}
@@ -167,6 +165,7 @@ export default function App() {
         tokens={data.tokens}
         logoUrl={data.personal.logoUrl}
         scrollProgress={scrollProgress}
+        introActive={showNfcWelcome}
       />
 
       {/* Architectural Grid Overlay */}
