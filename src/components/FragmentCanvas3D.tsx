@@ -74,9 +74,8 @@ export const FragmentCanvas3D: React.FC<FragmentCanvas3DProps> = ({
     camera.position.set(0, 0, 10.5);
     camera.lookAt(0, 0, 0);
 
-    // Fit the entire medallion and its surrounding ring, even on narrow phones.
-    // Compared with the old composition, the crest is larger on both desktop
-    // and mobile, without allowing it to clip past the visible viewport.
+    // Keep the mobile crest prominent: bring its attached decorative ring
+    // closer instead of shrinking the face to fit a desktop-sized orbit.
     const viewport = {
       compact: false,
       scale: 1,
@@ -89,8 +88,8 @@ export const FragmentCanvas3D: React.FC<FragmentCanvas3DProps> = ({
       camera.updateProjectionMatrix();
       const visibleHeight = 2 * 10 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
       const visibleWidth = visibleHeight * camera.aspect;
-      const ringDiameter = 4.9;
       viewport.compact = width < 900 && camera.aspect < 1.15;
+      const ringDiameter = viewport.compact ? 4.9 * 0.82 : 4.9;
       viewport.scale = Math.min(
         1.38,
         (visibleWidth * 0.86) / ringDiameter,
@@ -254,26 +253,29 @@ export const FragmentCanvas3D: React.FC<FragmentCanvas3DProps> = ({
 
       medallionGroup.visible = cfg.medallionVisible;
       gyroRingMesh.visible = cfg.orbitalRings;
-      medallionGroup.scale.setScalar(viewport.scale);
+      gyroRingMesh.scale.setScalar(viewport.compact ? 0.82 : 1);
+      const breathing = 1 + Math.sin(elapsedSec * 0.54 * speed) * 0.022;
+      medallionGroup.scale.setScalar(viewport.scale * breathing);
 
-      const driftX = Math.sin(elapsedSec * 0.4 * speed) * (viewport.compact ? 0.05 : 0.11);
-      const driftY = Math.sin(elapsedSec * 0.69 * speed) * (viewport.compact ? 0.12 : 0.21);
-      const pointerTravel = viewport.compact ? 0.09 : 0.27;
+      const driftX = Math.sin(elapsedSec * 0.43 * speed) * (viewport.compact ? 0.075 : 0.15);
+      const driftY = Math.sin(elapsedSec * 0.75 * speed) * (viewport.compact ? 0.16 : 0.27);
+      const pointerTravel = viewport.compact ? 0.11 : 0.29;
       medallionGroup.position.set(
         driftX + pointer.x * pointerTravel,
         driftY + pointer.y * pointerTravel * 0.68,
-        0.5 + Math.cos(elapsedSec * 0.53 * speed) * 0.11
+        0.5 + Math.cos(elapsedSec * 0.56 * speed) * 0.14
       );
 
       medallionGroup.rotation.y =
-        Math.sin(elapsedSec * 0.46 * speed) * 0.23 +
-        pointer.x * 0.34;
+        Math.sin(elapsedSec * 0.49 * speed) * 0.28 +
+        pointer.x * 0.36;
       medallionGroup.rotation.x =
-        Math.cos(elapsedSec * 0.4 * speed) * 0.11 -
-        pointer.y * 0.2;
+        Math.cos(elapsedSec * 0.44 * speed) * 0.135 -
+        pointer.y * 0.21;
+      medallionGroup.rotation.z = Math.sin(elapsedSec * 0.31 * speed) * 0.055;
 
-      gyroRingMesh.rotation.z = elapsedSec * 0.3 * speed;
-      gyroRingMesh.rotation.x = Math.PI / 3 + Math.sin(elapsedSec * 0.42 * speed) * 0.14;
+      gyroRingMesh.rotation.z = elapsedSec * 0.36 * speed;
+      gyroRingMesh.rotation.x = Math.PI / 3 + Math.sin(elapsedSec * 0.46 * speed) * 0.17;
     };
 
     updateScene(0.8);

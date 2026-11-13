@@ -390,20 +390,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Bottom Hero Scroll Bar */}
-          <div className="pt-6 border-t border-[#F4F0E8]/15 flex flex-wrap items-center justify-between gap-4 text-xs font-mono-tech text-[#B8B8B8]">
-            <span>
-              {isAr
-                ? 'شعار ثلاثي الأبعاد عائم يتفاعل مع حركة المؤشر — مرّر لأسفل للاستكشاف'
-                : 'INTERACTIVE FLOATING 3D CREST — MOVE YOUR CURSOR & SCROLL TO EXPLORE'}
-            </span>
-            <a
-              href="#about"
-              className="text-[#FFB629] hover:underline uppercase tracking-widest"
-            >
-              {isAr ? 'السيرة المهنية الموثقة ↓' : 'Verified Biography ↓'}
-            </a>
-          </div>
         </section>
 
         {/* =========================================================
