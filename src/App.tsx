@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
 import {
   ArrowDownRight,
@@ -28,6 +28,13 @@ import { Navbar } from './components/Navbar';
 import { CaseStudyModal } from './components/CaseStudyModal';
 import { ProjectInquirySection } from './components/ProjectInquirySection';
 import { FragmentLogo } from './components/FragmentLogo';
+import { NfcWelcomeIntro } from './components/NfcWelcomeIntro';
+
+function openedFromNfcLink(): boolean {
+  const isNfcPath = window.location.pathname.startsWith('/nfc/sherif');
+  const hasNfcQuery = new URLSearchParams(window.location.search).get('nfc') === '1';
+  return isNfcPath || hasNfcQuery;
+}
 
 export default function App() {
   // Read-only public portfolio. All editorial changes are made in source code,
@@ -39,18 +46,23 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProject, setSelectedProject] = useState<DocumentedProject | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [isNfcMode, setIsNfcMode] = useState<boolean>(() => {
-    return (
-      window.location.pathname.includes('/nfc/sherif') ||
-      window.location.search.includes('nfc=1')
-    );
-  });
+  const [arrivedFromNfc] = useState(openedFromNfcLink);
+  const [isNfcMode, setIsNfcMode] = useState(arrivedFromNfc);
+  const [showNfcWelcome, setShowNfcWelcome] = useState(
+    () => arrivedFromNfc && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+  const [nfcWelcomeFinished, setNfcWelcomeFinished] = useState(false);
 
   const heroTitleRef = useRef<HTMLHeadingElement>(null);
 
   const isAr = lang === 'AR';
   const cleanPhone = data.personal.phone.replace(/\s+/g, '');
   const whatsappUrl = `https://wa.me/${data.personal.whatsappNumber}`;
+
+  const finishNfcWelcome = useCallback(() => {
+    setShowNfcWelcome(false);
+    setNfcWelcomeFinished(true);
+  }, []);
 
   // This standalone public page reads embedded, version-controlled content.
 
@@ -70,7 +82,7 @@ export default function App() {
   // GSAP Hero Entrance & Scroll Progress listener
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!prefersReducedMotion && heroTitleRef.current) {
+    if (!prefersReducedMotion && !showNfcWelcome && heroTitleRef.current) {
       gsap.fromTo(
         heroTitleRef.current,
         { y: 36, opacity: 0 },
@@ -90,7 +102,7 @@ export default function App() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [showNfcWelcome]);
 
   const handleDownloadVcf = () => {
     try {
@@ -131,6 +143,15 @@ export default function App() {
       className="min-h-screen relative text-white selection:bg-[#FFB629] selection:text-[#0B0B0B]"
       style={{ backgroundColor: data.tokens.background }}
     >
+      {showNfcWelcome && (
+        <NfcWelcomeIntro
+          logoUrl={data.personal.logoUrl}
+          nameEn={data.personal.nameEn}
+          nameAr={data.personal.nameAr}
+          onComplete={finishNfcWelcome}
+        />
+      )}
+
       {/* Subtle Scroll Progress Indicator */}
       <div
         className="fixed top-0 left-0 h-[3px] z-50 transition-all duration-150"
@@ -245,7 +266,7 @@ export default function App() {
           {/* Core Asymmetric Hero Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center my-0 lg:my-auto py-4 lg:py-12">
             {/* Hero Left: Oversized Typography, Roles & CTAs */}
-            <div className="order-2 lg:order-1 lg:col-span-7 space-y-8 p-6 sm:p-8 rounded-2xl bg-[#0B0B0B]/65 backdrop-blur-sm border border-[#F4F0E8]/10">
+            <div className={`order-2 lg:order-1 lg:col-span-7 space-y-8 p-6 sm:p-8 rounded-2xl bg-[#0B0B0B]/65 backdrop-blur-sm border border-[#F4F0E8]/10 ${nfcWelcomeFinished ? 'nfc-reveal-profile' : ''}`}>
               <div className="inline-flex items-center gap-3 text-xs font-mono-tech uppercase tracking-[0.22em] text-[#FFB629]">
                 <span>{isAr ? data.personal.industry.ar : data.personal.industry.en}</span>
                 <span className="text-[#B8B8B8]">—</span>
@@ -339,7 +360,7 @@ export default function App() {
             </div>
 
             {/* Hero Right: Executive Portrait & 3D Calligraphic Emblem Framing */}
-            <div className="order-1 lg:order-2 lg:col-span-5 flex flex-col items-center lg:items-end">
+            <div className={`order-1 lg:order-2 lg:col-span-5 flex flex-col items-center lg:items-end ${nfcWelcomeFinished ? 'nfc-reveal-portrait' : ''}`}>
               <div className="relative w-full max-w-md rounded-2xl bg-[#121212]/90 border border-[#F4F0E8]/20 p-4 backdrop-blur-md shadow-2xl">
                 {/* Floating Calligraphic Crest Badge */}
                 <div className="absolute -top-7 -left-4 sm:-left-7 z-20 w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#080808] border-2 border-[#FFB629] p-1.5 shadow-xl flex items-center justify-center">
