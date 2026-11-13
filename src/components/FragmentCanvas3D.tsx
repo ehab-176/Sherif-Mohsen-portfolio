@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { BrandTokens, Scene3DSettings } from '../data/studioData';
-import { compute3DMonolithLayout } from '../utils/studioLogic';
 
 interface FragmentCanvas3DProps {
   sceneSettings: Scene3DSettings;
@@ -12,29 +11,18 @@ interface FragmentCanvas3DProps {
 }
 
 /**
- * True Three.js WebGL 3D Scene for Sherif Mohsen's Portfolio.
- * Features:
- * 1. Central 3D Sculpted Calligraphic Emblem Medallion (multi-part Group with beveled metallic cylinder,
- *    glowing gold rim torus, and double-sided textured calligraphic crest).
- * 2. Extruded 3D Architectural Monoliths (multi-part Groups with ExtrudeGeometry beveled bodies,
- *    recessed obsidian cores, and luminous wireframe/edge frames).
- * 3. Orbital 3D Torus Rings & Drifting 3D Particle Field.
- * 4. Cursor-responsive parallax + Scroll-driven camera & monolith choreography.
- * 5. Software WebGL detection (`isSoftwareGl`) and `afterDraw` pacing for reliable headless Chromium rendering.
+ * A single floating 3D Sherif Mohsen medallion, centered on all screens.
+ * The original crest, metallic rims, lighting and attached gold gyro ring are
+ * preserved. No background monoliths, floating cards or particles are created.
+ * Pointer movement gently tilts and offsets the crest without hiding the art.
  */
 export const FragmentCanvas3D: React.FC<FragmentCanvas3DProps> = ({
   sceneSettings,
   tokens,
   logoUrl,
-  scrollProgress,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<number>(scrollProgress);
   const configRef = useRef({ sceneSettings, tokens });
-
-  useEffect(() => {
-    scrollRef.current = scrollProgress;
-  }, [scrollProgress]);
 
   useEffect(() => {
     configRef.current = { sceneSettings, tokens };
@@ -83,7 +71,34 @@ export const FragmentCanvas3D: React.FC<FragmentCanvas3DProps> = ({
       0.1,
       100
     );
-    camera.position.set(0, 0.2, 10.5);
+    camera.position.set(0, 0, 10.5);
+    camera.lookAt(0, 0, 0);
+
+    // Fit the entire medallion and its surrounding ring, even on narrow phones.
+    // Compared with the old composition, the crest is larger on both desktop
+    // and mobile, without allowing it to clip past the visible viewport.
+    const viewport = {
+      compact: false,
+      scale: 1,
+    };
+
+    const updateViewport = () => {
+      const width = container.clientWidth || window.innerWidth;
+      const height = container.clientHeight || window.innerHeight;
+      camera.aspect = width / Math.max(1, height);
+      camera.updateProjectionMatrix();
+      const visibleHeight = 2 * 10 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+      const visibleWidth = visibleHeight * camera.aspect;
+      const ringDiameter = 4.9;
+      viewport.compact = width < 900 && camera.aspect < 1.15;
+      viewport.scale = Math.min(
+        1.38,
+        (visibleWidth * 0.86) / ringDiameter,
+        (visibleHeight * 0.82) / ringDiameter
+      );
+      return { width, height };
+    };
+    updateViewport();
 
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     const roomEnv = new RoomEnvironment();
@@ -112,7 +127,7 @@ export const FragmentCanvas3D: React.FC<FragmentCanvas3DProps> = ({
 
     // 1. CENTRAL 3D SCULPTED CALLIGRAPHIC MEDALLION GROUP
     const medallionGroup = new THREE.Group();
-    medallionGroup.position.set(2.4, 0.35, 0.4);
+    medallionGroup.position.set(0, 0, 0.5);
     worldGroup.add(medallionGroup);
 
     const coinGeo = new THREE.CylinderGeometry(1.72, 1.72, 0.28, isSoftwareGl ? 32 : 64);
@@ -196,150 +211,23 @@ export const FragmentCanvas3D: React.FC<FragmentCanvas3DProps> = ({
     gyroRingMesh.rotation.x = Math.PI / 3;
     medallionGroup.add(gyroRingMesh);
 
-    // 2. EXTRUDED 3D ARCHITECTURAL MONOLITHS (Composite 3-Part Groups)
-    const monolithsContainer = new THREE.Group();
-    worldGroup.add(monolithsContainer);
-
-    const createRoundedRectShape = (w: number, h: number, r: number) => {
-      const shape = new THREE.Shape();
-      const x = -w / 2;
-      const y = -h / 2;
-      shape.moveTo(x, y + r);
-      shape.lineTo(x, y + h - r);
-      shape.quadraticCurveTo(x, y + h, x + r, y + h);
-      shape.lineTo(x + w - r, y + h);
-      shape.quadraticCurveTo(x + w, y + h, x + w, y + h - r);
-      shape.lineTo(x + w, y + r);
-      shape.quadraticCurveTo(x + w, y, x + w - r, y);
-      shape.lineTo(x + r, y);
-      shape.quadraticCurveTo(x, y, x, y + r);
-      return shape;
-    };
-
-    const slabShape = createRoundedRectShape(1.55, 2.25, 0.12);
-    const extrudeSettings: THREE.ExtrudeGeometryOptions = {
-      steps: 1,
-      depth: 0.32,
-      bevelEnabled: true,
-      bevelThickness: 0.06,
-      bevelSize: 0.05,
-      bevelOffset: 0,
-      bevelSegments: isSoftwareGl ? 2 : 4,
-    };
-
-    const slabGeo = new THREE.ExtrudeGeometry(slabShape, extrudeSettings);
-    slabGeo.center();
-
-    const coreGeo = new THREE.BoxGeometry(1.18, 1.82, 0.38);
-    const edgeGeo = new THREE.EdgesGeometry(slabGeo, 25);
-
-    const slabBodyMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#1C1C1C'),
-      metalness: 0.78,
-      roughness: 0.24,
-    });
-
-    const slabIvoryMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(tokens.lightSurface || '#F4F0E8'),
-      metalness: 0.45,
-      roughness: 0.32,
-    });
-
-    const slabCoreMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#0A0A0A'),
-      metalness: 0.9,
-      roughness: 0.15,
-    });
-
-    const accentEdgeMat = new THREE.LineBasicMaterial({
-      color: new THREE.Color(tokens.accent || '#FFB629'),
-      transparent: true,
-      opacity: 0.55,
-    });
-
-    const ivoryEdgeMat = new THREE.LineBasicMaterial({
-      color: new THREE.Color(tokens.lightSurface || '#F4F0E8'),
-      transparent: true,
-      opacity: 0.28,
-    });
-
-    const effectiveCount = Math.max(
-      4,
-      Math.min(isSoftwareGl ? 10 : 12, sceneSettings.monolithCount)
-    );
-    const monolithMeshes: THREE.Group[] = [];
-
-    for (let i = 0; i < effectiveCount; i++) {
-      const itemGroup = new THREE.Group();
-      const isAccentPiece = i % 3 === 0;
-      const isIvoryPiece = i % 4 === 1;
-
-      const bodyMesh = new THREE.Mesh(
-        slabGeo,
-        isIvoryPiece ? slabIvoryMat : slabBodyMat
-      );
-      itemGroup.add(bodyMesh);
-
-      const coreMesh = new THREE.Mesh(coreGeo, slabCoreMat);
-      itemGroup.add(coreMesh);
-
-      const wireLines = new THREE.LineSegments(
-        edgeGeo,
-        isAccentPiece ? accentEdgeMat : ivoryEdgeMat
-      );
-      itemGroup.add(wireLines);
-
-      monolithsContainer.add(itemGroup);
-      monolithMeshes.push(itemGroup);
-    }
-
-    // 3. LARGE ARCHITECTURAL ORBITAL GRID RING
-    const orbitalGridGeo = new THREE.TorusGeometry(5.6, 0.012, 8, isSoftwareGl ? 64 : 120);
-    const orbitalGridMat = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(tokens.lightSurface || '#F4F0E8'),
-      transparent: true,
-      opacity: 0.16,
-    });
-    const orbitalGridRing = new THREE.Mesh(orbitalGridGeo, orbitalGridMat);
-    orbitalGridRing.rotation.x = Math.PI / 2.3;
-    orbitalGridRing.rotation.y = -0.22;
-    worldGroup.add(orbitalGridRing);
-
-    // 4. AMBIENT 3D DRIFTING PARTICLES
-    const pCount = isSoftwareGl ? 32 : 85;
-    const particlePositions = new Float32Array(pCount * 3);
-    for (let i = 0; i < pCount; i++) {
-      const angle = (i / pCount) * Math.PI * 2 * 3.7;
-      const rad = 2.5 + ((i * 1.37) % 7.5);
-      particlePositions[i * 3] = Math.cos(angle) * rad;
-      particlePositions[i * 3 + 1] = (((i * 0.73) % 1) - 0.5) * 8.5;
-      particlePositions[i * 3 + 2] = Math.sin(angle) * rad - 2.0;
-    }
-    const particleGeo = new THREE.BufferGeometry();
-    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-    const particleMat = new THREE.PointsMaterial({
-      color: new THREE.Color(tokens.accent || '#FFB629'),
-      size: 0.065,
-      transparent: true,
-      opacity: 0.65,
-    });
-    const particleSystem = new THREE.Points(particleGeo, particleMat);
-    worldGroup.add(particleSystem);
-
+    // The medallion is deliberately the only floating 3D object.
     const pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
-    const handlePointerMove = (e: MouseEvent) => {
+    const handlePointerMove = (e: PointerEvent) => {
       pointer.targetX = (e.clientX / window.innerWidth) * 2 - 1;
       pointer.targetY = -(e.clientY / window.innerHeight) * 2 + 1;
     };
-    window.addEventListener('mousemove', handlePointerMove, { passive: true });
+    const handleWindowBlur = () => {
+      pointer.targetX = 0;
+      pointer.targetY = 0;
+    };
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    window.addEventListener('blur', handleWindowBlur);
 
     const handleResize = () => {
       if (!container) return;
-      const w = container.clientWidth || window.innerWidth;
-      const h = container.clientHeight || window.innerHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+      const { width, height } = updateViewport();
+      renderer.setSize(width, height);
     };
     window.addEventListener('resize', handleResize);
 
@@ -352,72 +240,40 @@ export const FragmentCanvas3D: React.FC<FragmentCanvas3DProps> = ({
 
     const updateScene = (elapsedSec: number) => {
       const { sceneSettings: cfg, tokens: tk } = configRef.current;
-      const sp = scrollRef.current;
-      const speed = prefersReducedMotion ? 0 : cfg.motionIntensity;
+      const speed = prefersReducedMotion ? 0 : THREE.MathUtils.clamp(cfg.motionIntensity, 0, 2);
 
-      pointer.x += (pointer.targetX - pointer.x) * 0.06;
-      pointer.y += (pointer.targetY - pointer.y) * 0.06;
+      // Inertia makes the crest feel suspended rather than pinned to the cursor.
+      pointer.x += (pointer.targetX - pointer.x) * 0.055;
+      pointer.y += (pointer.targetY - pointer.y) * 0.055;
 
       rimLight.color.set(tk.accent || '#FFB629');
       innerRimMat.color.set(tk.accent || '#FFB629');
       innerRimMat.emissive.set(tk.accent || '#FFB629');
       gyroRingMat.color.set(tk.accent || '#FFB629');
-      accentEdgeMat.color.set(tk.accent || '#FFB629');
-      particleMat.color.set(tk.accent || '#FFB629');
       outerRimMat.color.set(tk.lightSurface || '#F4F0E8');
-      slabIvoryMat.color.set(tk.lightSurface || '#F4F0E8');
 
       medallionGroup.visible = cfg.medallionVisible;
-      orbitalGridRing.visible = cfg.orbitalRings;
       gyroRingMesh.visible = cfg.orbitalRings;
-      particleSystem.visible = cfg.ambientParticles;
+      medallionGroup.scale.setScalar(viewport.scale);
 
-      const poses = compute3DMonolithLayout(
-        sp,
-        pointer.x,
-        pointer.y,
-        elapsedSec,
-        monolithMeshes.length,
-        speed
-      );
-
-      for (let i = 0; i < monolithMeshes.length; i++) {
-        const mesh = monolithMeshes[i];
-        const p = poses[i];
-        if (!p) continue;
-        mesh.position.set(p.x, p.y, p.z);
-        mesh.rotation.set(p.rx, p.ry, p.rz);
-        mesh.scale.set(p.scale, p.scale, p.scale);
-      }
-
-      const isMobileViewport = window.innerWidth < 900;
-      const baseMedallionX = isMobileViewport ? 0 : 2.55 - sp * 1.8;
-      const baseMedallionY = isMobileViewport
-        ? 1.35 - sp * 1.1
-        : 0.25 + Math.sin(elapsedSec * 0.9) * 0.18;
+      const driftX = Math.sin(elapsedSec * 0.4 * speed) * (viewport.compact ? 0.05 : 0.11);
+      const driftY = Math.sin(elapsedSec * 0.69 * speed) * (viewport.compact ? 0.12 : 0.21);
+      const pointerTravel = viewport.compact ? 0.09 : 0.27;
       medallionGroup.position.set(
-        baseMedallionX + pointer.x * 0.35,
-        baseMedallionY + pointer.y * 0.25,
-        0.5 - sp * 1.4
+        driftX + pointer.x * pointerTravel,
+        driftY + pointer.y * pointerTravel * 0.68,
+        0.5 + Math.cos(elapsedSec * 0.53 * speed) * 0.11
       );
 
       medallionGroup.rotation.y =
-        Math.sin(elapsedSec * 0.55 * speed) * 0.48 +
-        pointer.x * 0.42 +
-        sp * Math.PI * 1.2;
+        Math.sin(elapsedSec * 0.46 * speed) * 0.23 +
+        pointer.x * 0.34;
       medallionGroup.rotation.x =
-        Math.cos(elapsedSec * 0.42 * speed) * 0.16 - pointer.y * 0.24;
+        Math.cos(elapsedSec * 0.4 * speed) * 0.11 -
+        pointer.y * 0.2;
 
-      gyroRingMesh.rotation.z = elapsedSec * 0.45 * speed;
-      gyroRingMesh.rotation.x = Math.PI / 3 + Math.sin(elapsedSec * 0.6) * 0.35;
-
-      orbitalGridRing.rotation.z = elapsedSec * 0.08 * speed + sp * 1.2;
-      particleSystem.rotation.y = elapsedSec * 0.05 * speed + pointer.x * 0.15;
-      particleSystem.position.y = sp * 1.8;
-
-      camera.position.x = pointer.x * 0.55;
-      camera.position.y = 0.2 + pointer.y * 0.35 - sp * 0.65;
-      camera.lookAt(0, -sp * 0.4, 0);
+      gyroRingMesh.rotation.z = elapsedSec * 0.3 * speed;
+      gyroRingMesh.rotation.x = Math.PI / 3 + Math.sin(elapsedSec * 0.42 * speed) * 0.14;
     };
 
     updateScene(0.8);
@@ -449,7 +305,8 @@ export const FragmentCanvas3D: React.FC<FragmentCanvas3DProps> = ({
     return () => {
       disposed = true;
       cancelAnimationFrame(rafId);
-      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('blur', handleWindowBlur);
       window.removeEventListener('resize', handleResize);
       envMap.dispose();
       coinGeo.dispose();
@@ -462,21 +319,9 @@ export const FragmentCanvas3D: React.FC<FragmentCanvas3DProps> = ({
       faceMat.dispose();
       gyroRingGeo.dispose();
       gyroRingMat.dispose();
-      slabGeo.dispose();
-      coreGeo.dispose();
-      edgeGeo.dispose();
-      slabBodyMat.dispose();
-      slabIvoryMat.dispose();
-      slabCoreMat.dispose();
-      accentEdgeMat.dispose();
-      ivoryEdgeMat.dispose();
-      orbitalGridGeo.dispose();
-      orbitalGridMat.dispose();
-      particleGeo.dispose();
-      particleMat.dispose();
       renderer.dispose();
     };
-  }, [logoUrl, sceneSettings.monolithCount]);
+  }, [logoUrl]);
 
   return (
     <div

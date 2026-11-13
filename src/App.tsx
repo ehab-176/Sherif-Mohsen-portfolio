@@ -7,7 +7,6 @@ import {
   Building2,
   Download,
   ExternalLink,
-  Info,
   MapPin,
   MessageCircle,
   Newspaper,
@@ -224,11 +223,11 @@ export default function App() {
         <section
           id="hero"
           className={`min-h-screen flex flex-col justify-between ${
-            isNfcMode ? 'pt-12' : 'pt-28 sm:pt-32'
+            isNfcMode ? 'pt-12' : 'pt-40 sm:pt-44 xl:pt-32'
           } pb-16 px-4 sm:px-8 max-w-[1440px] mx-auto`}
         >
           {/* Top Editorial Metadata Strip */}
-          <div className="flex flex-wrap items-center justify-between gap-4 pb-8 border-b border-[#F4F0E8]/15 text-xs font-mono-tech text-[#B8B8B8]">
+          <div className="hidden lg:flex flex-wrap items-center justify-between gap-4 pb-8 border-b border-[#F4F0E8]/15 text-xs font-mono-tech text-[#B8B8B8]">
             <div className="flex items-center gap-3">
               <span className="text-[#FFB629] font-semibold">
                 {isAr ? 'ملف الأعمال التفاعلي الثلاثي الأبعاد' : '3D WEBGL EXECUTIVE PORTFOLIO'}
@@ -244,9 +243,9 @@ export default function App() {
           </div>
 
           {/* Core Asymmetric Hero Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center my-auto py-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center my-0 lg:my-auto py-4 lg:py-12">
             {/* Hero Left: Oversized Typography, Roles & CTAs */}
-            <div className="lg:col-span-7 space-y-8 p-6 sm:p-8 rounded-2xl bg-[#0B0B0B]/65 backdrop-blur-sm border border-[#F4F0E8]/10">
+            <div className="order-2 lg:order-1 lg:col-span-7 space-y-8 p-6 sm:p-8 rounded-2xl bg-[#0B0B0B]/65 backdrop-blur-sm border border-[#F4F0E8]/10">
               <div className="inline-flex items-center gap-3 text-xs font-mono-tech uppercase tracking-[0.22em] text-[#FFB629]">
                 <span>{isAr ? data.personal.industry.ar : data.personal.industry.en}</span>
                 <span className="text-[#B8B8B8]">—</span>
@@ -340,7 +339,7 @@ export default function App() {
             </div>
 
             {/* Hero Right: Executive Portrait & 3D Calligraphic Emblem Framing */}
-            <div className="lg:col-span-5 flex flex-col items-center lg:items-end">
+            <div className="order-1 lg:order-2 lg:col-span-5 flex flex-col items-center lg:items-end">
               <div className="relative w-full max-w-md rounded-2xl bg-[#121212]/90 border border-[#F4F0E8]/20 p-4 backdrop-blur-md shadow-2xl">
                 {/* Floating Calligraphic Crest Badge */}
                 <div className="absolute -top-7 -left-4 sm:-left-7 z-20 w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#080808] border-2 border-[#FFB629] p-1.5 shadow-xl flex items-center justify-center">
@@ -395,8 +394,8 @@ export default function App() {
           <div className="pt-6 border-t border-[#F4F0E8]/15 flex flex-wrap items-center justify-between gap-4 text-xs font-mono-tech text-[#B8B8B8]">
             <span>
               {isAr
-                ? 'خلفية ثلاثية الأبعاد تفاعلية تعمل بتقنية WebGL — حرّك المؤشر أو مرّر لأسفل'
-                : 'INTERACTIVE 3D WEBGL MONOLITHS & CALLIGRAPHIC MEDALLION — SCROLL TO EXPLORE'}
+                ? 'شعار ثلاثي الأبعاد عائم يتفاعل مع حركة المؤشر — مرّر لأسفل للاستكشاف'
+                : 'INTERACTIVE FLOATING 3D CREST — MOVE YOUR CURSOR & SCROLL TO EXPLORE'}
             </span>
             <a
               href="#about"
@@ -717,16 +716,6 @@ export default function App() {
                   />
                 </div>
               </div>
-            </div>
-
-            {/* Mandatory Editorial Disclosure Banner */}
-            <div className="p-4 rounded-xl bg-[#1C1C1C] border border-[#F4F0E8]/15 flex flex-wrap items-center justify-between gap-4 text-xs font-mono-tech text-[#B8B8B8]">
-              <span className="inline-flex items-center gap-2">
-                <Info className="w-4 h-4 text-[#FFB629] shrink-0" />
-                {isAr
-                  ? 'الفعاليات ذات الصور الصحفية الفعلية تظهر أولًا، ثم أنشطة موثقة بالمصادر تُعرض كنصوص فقط لعدم توافر صور مؤكدة. صورة الموقع لا تثبت وحدها الجهة المنفذة.'
-                  : 'Events with real press photographs appear first. Source-documented activities without confirmed imagery appear afterwards as text-only cards. A location photo alone does not prove who delivered the work.'}
-              </span>
             </div>
 
             {/* Keep photo cards and text-only cards in separate grids so a photo

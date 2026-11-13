@@ -38,7 +38,7 @@ export const SocialLinks: React.FC<SocialLinksProps> = ({ links, lang, className
     <div className={`flex items-center gap-1.5 ${className}`} role="group" aria-label={isAr ? 'حسابات التواصل الاجتماعي' : 'Social media profiles'}>
       {SOCIAL_PLATFORMS.map(({ key, label, Icon }) => {
         const href = verifiedSocialUrl(links[key], key);
-        const baseClass = 'w-9 h-9 inline-flex items-center justify-center rounded-lg border transition-colors';
+        const baseClass = 'w-11 h-11 xl:w-12 xl:h-12 inline-flex items-center justify-center rounded-xl border shadow-[0_0_0_1px_rgba(255,182,41,0.06)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFB629]';
 
         return href ? (
           <a
@@ -48,9 +48,9 @@ export const SocialLinks: React.FC<SocialLinksProps> = ({ links, lang, className
             rel="noopener noreferrer me"
             title={label}
             aria-label={`${label} — Sherif Mohsen`}
-            className={`${baseClass} border-[#FFB629]/50 text-[#FFB629] hover:bg-[#FFB629] hover:text-[#0B0B0B]`}
+            className={`${baseClass} border-[#FFB629]/70 bg-[#FFB629]/10 text-[#FFB629] hover:bg-[#FFB629] hover:text-[#0B0B0B]`}
           >
-            <Icon className="w-[17px] h-[17px]" />
+            <Icon className="w-6 h-6" strokeWidth={2.25} />
           </a>
         ) : (
           <span
@@ -60,7 +60,7 @@ export const SocialLinks: React.FC<SocialLinksProps> = ({ links, lang, className
             aria-disabled="true"
             className={`${baseClass} border-[#F4F0E8]/10 text-[#858585]/60 cursor-not-allowed`}
           >
-            <Icon className="w-[17px] h-[17px]" />
+            <Icon className="w-6 h-6" strokeWidth={2.25} />
           </span>
         );
       })}

@@ -91,7 +91,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <SocialLinks
             links={data.personal.socialLinks}
             lang={lang}
-            className="hidden xl:flex border-l border-[#F4F0E8]/15 pl-3"
+            className="hidden xl:flex gap-2.5 rounded-xl border border-[#FFB629]/30 bg-[#20190F]/80 p-1.5"
           />
           <button
             type="button"
@@ -128,6 +128,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
+      </div>
+
+      {/* Keep the social profiles visible on mobile, even with the menu closed. */}
+      <div className="xl:hidden flex items-center justify-center gap-4 border-t border-[#FFB629]/20 bg-[#13100C]/95 px-4 py-2">
+        <span className="text-[11px] sm:text-xs font-semibold text-[#F4F0E8]/90 tracking-wide">
+          {isAr ? 'تابع شريف محسن' : 'Follow Sherif Mohsen'}
+        </span>
+        <SocialLinks links={data.personal.socialLinks} lang={lang} className="gap-3" />
       </div>
 
       {/* Mobile Navigation Drawer */}
