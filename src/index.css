@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #0B0B0B;
+    --surface-light: #F4F0E8;
+    --text-primary: #FFFFFF;
+    --accent-gold: #FFB629;
+    --text-secondary: #B8B8B8;
+    --font-display: 'Outfit', 'Cairo', sans-serif;
+    --font-sans: 'Plus Jakarta Sans', 'Cairo', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+  }
+
+  html[dir="rtl"] {
+    font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    overflow-x: hidden;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Arabic names must keep Cairo even when the page language is English. */
+.font-arabic-display {
+  font-family: 'Cairo', sans-serif;
+  letter-spacing: 0 !important;
+}
+
+html[dir="rtl"] .font-display {
+  font-family: 'Cairo', 'Outfit', sans-serif;
+  letter-spacing: 0 !important;
+}
+
+.font-mono-tech {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle editorial grid overlay */
+.bg-architectural-grid {
+  background-size: 64px 64px;
+  background-image: 
+    linear-gradient(to right, rgba(244, 240, 232, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(244, 240, 232, 0.035) 1px, transparent 1px);
+}
+
+/* Custom sleek scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0B0B;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(244, 240, 232, 0.22);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FFB629;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
